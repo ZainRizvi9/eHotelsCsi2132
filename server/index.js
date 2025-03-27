@@ -2,19 +2,17 @@
  * Mount API routes and start backend server.
  *
  * @author Zain
- * @since 
  */
 
-// Setup
 const express = require("express");
-const app = express();
 const cors = require("cors");
+const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Define route constants
+// Route modules
 const bookingRoutes = require("./routes/bookingRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const employeeRoleRoutes = require("./routes/employeeRoleRoutes");
@@ -23,18 +21,16 @@ const headquartersRoutes = require("./routes/headquartersRoutes");
 const hotelRoutes = require("./routes/hotelRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 
-// Mount api routes
-app.use("/api", bookingRoutes);
-app.use("/api", customerRoutes);
-app.use("/api", employeeRoleRoutes);
-app.use("/api", employeeRoutes);
-app.use("/api", headquartersRoutes);
-app.use("/api", hotelRoutes);
-app.use("/api", roomRoutes);
+// Mount routes
+app.use("/api/booking", bookingRoutes);
+app.use("/api/customer", customerRoutes);
+app.use("/api/employeerole", employeeRoleRoutes);
+app.use("/api/employee", employeeRoutes);
+app.use("/api/headquarters", headquartersRoutes);
+app.use("/api/hotel", hotelRoutes);
+app.use("/api/room", roomRoutes);
 
-/**
- * Start backend server
- */
+// Start server
 app.listen(5001, () => {
-    console.log("Server started on port 5001.")
+    console.log("✅ Server running on http://localhost:5001");
 });

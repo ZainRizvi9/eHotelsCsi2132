@@ -6,6 +6,7 @@ import InputRoom from './components/roomComponents/InputRoom';
 import ListRooms from "./components/roomComponents/ListRooms";
 import InputHotel from './components/hotelComponents/InputHotel';
 import ListHotels from './components/hotelComponents/ListHotels';
+import InputBooking from "./components/booking/InputBooking";
 
 function App() {
   const [showRoomInput, setShowRoomInput] = useState(false);
@@ -39,30 +40,35 @@ function App() {
   return (
     <Fragment>
       <div className="header">
-      <button onClick={handleHomeClick}>Home</button>
+        <button onClick={handleHomeClick}>Home</button>
         <button onClick={handleRoomClick}>Rooms</button>
         <button onClick={handleHotelClick}>Hotels</button>
       </div>
-
+  
       <div className="container">
         <div className="text">
           <p>Welcome to eHotel System</p>
         </div>
+  
+        {/* Room section */}
         {showRoomInput && showRoomList && (
           <Fragment>
             <InputRoom />
             <ListRooms />
           </Fragment>
         )}
+  
+        {/* Hotel section */}
         {showHotelInput && showHotelList && (
           <Fragment>
             <InputHotel />
             <ListHotels />
           </Fragment>
         )}
-      </div> 
+        <InputBooking />
+      </div>
     </Fragment>
-  );
+  );  
 }
 
 export default App;
