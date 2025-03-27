@@ -4,14 +4,18 @@ import EditHotel from "./EditHotel";
 const ListHotels = () => {
   const [hotels, setHotels] = useState([]);
 
-  const deleteHotel = async (id) => {
+  const deleteHotel = async (hotelID, companyName) => {
+    if (!window.confirm("Are you sure you want to delete this hotel?")) return;
+    
     try {
-      await fetch(`http://localhost:5001/api/hotel/${id}`, {
-        method: "DELETE"
+      await fetch("http://localhost:5001/api/hotel", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hotelID, companyName })
       });
-      setHotels(hotels.filter(hotel => hotel.hotelid !== id));
+      setHotels(hotels.filter(hotel => hotel.hotelid !== hotelID || hotel.companyname !== companyName));
     } catch (error) {
-      console.error(error.message);
+      console.error("Failed to delete hotel:", error.message);
     }
   };
 
@@ -21,7 +25,7 @@ const ListHotels = () => {
       const jsonData = await response.json();
       setHotels(jsonData);
     } catch (error) {
-      console.error(error.message);
+      console.error("Failed to fetch hotels:", error.message);
     }
   };
 
@@ -31,8 +35,8 @@ const ListHotels = () => {
 
   return (
     <Fragment>
-      <h1 className="mt-5 text-centre">List of Hotels</h1>
-      <table className="table mt-5 text-centre">
+      <h1 className="mt-5 text-center">List of Hotels</h1>
+      <table className="table mt-5 text-center">
         <thead>
           <tr>
             <th>Hotel ID</th>
@@ -40,11 +44,13 @@ const ListHotels = () => {
             <th>Address</th>
             <th>Category</th>
             <th>Number Of Rooms</th>
+            <th>Edit</th>
+            <th>Delete</th>
           </tr>
         </thead>
         <tbody>
           {hotels.map(hotel => (
-            <tr key={hotel.hotelid}>
+            <tr key={`${hotel.hotelid}-${hotel.companyname}`}>
               <td>{hotel.hotelid}</td>
               <td>{hotel.companyname}</td>
               <td>
@@ -56,7 +62,12 @@ const ListHotels = () => {
                 <EditHotel hotel={hotel} />
               </td>
               <td>
-                <button className="btn btn-danger" onClick={() => deleteHotel(hotel.hotelid)}>Delete</button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => deleteHotel(hotel.hotelid, hotel.companyname)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
