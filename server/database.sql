@@ -1126,3 +1126,4 @@ SELECT HotelID, CompanyName,
            END) AS TotalCapacity
 FROM Room
 GROUP BY HotelID, CompanyName;
+ALTER TABLE Booking ADD COLUMN Status VARCHAR(20);
