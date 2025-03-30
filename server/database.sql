@@ -1029,3 +1029,100 @@ VALUES (1, 1200, 'CreditCard');
 
 ALTER TABLE Customer ADD COLUMN Email VARCHAR(100) UNIQUE;
 ALTER TABLE Employee ADD COLUMN Email VARCHAR(100) UNIQUE;
+
+
+-- ===============================================
+-- Triggers, Indexes, and Example Queries Script
+-- e-Hotels Project – Additional SQL Code
+-- ===============================================
+
+-- 1. TRIGGERS
+
+-- Trigger 1: Prevent Overlapping Bookings
+CREATE OR REPLACE FUNCTION check_booking_overlap() 
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+       SELECT 1 
+       FROM Booking 
+       WHERE RoomNumber = NEW.RoomNumber 
+         AND HotelID = NEW.HotelID 
+         AND CompanyName = NEW.CompanyName 
+         AND (NEW.StartDate, NEW.EndDate) OVERLAPS (StartDate, EndDate)
+    ) THEN
+       RAISE EXCEPTION 'Room is already booked during the requested period';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_booking_overlap ON Booking;
+CREATE TRIGGER trg_check_booking_overlap
+BEFORE INSERT ON Booking
+FOR EACH ROW EXECUTE FUNCTION check_booking_overlap();
+
+-- Trigger 2: Validate Renting Dates
+CREATE OR REPLACE FUNCTION check_renting_dates()
+RETURNS TRIGGER AS $$
+BEGIN
+   IF NEW.CheckoutDate <= NEW.RentalDate THEN
+      RAISE EXCEPTION 'Checkout date must be later than rental date';
+   END IF;
+   RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_renting_dates ON Renting;
+CREATE TRIGGER trg_check_renting_dates
+BEFORE INSERT OR UPDATE ON Renting
+FOR EACH ROW EXECUTE FUNCTION check_renting_dates();
+
+-- 2. INDEXES
+
+-- Index 1: Fast Lookup for Bookings by Room and Date Range
+CREATE INDEX IF NOT EXISTS idx_booking_room_dates 
+ON Booking(RoomNumber, HotelID, CompanyName, StartDate, EndDate);
+
+-- Index 2: Customer Email Lookup (assumes Email is UNIQUE)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_customer_email 
+ON Customer(Email);
+
+-- Index 3: Employee Lookup by Hotel
+CREATE INDEX IF NOT EXISTS idx_employee_hotel 
+ON Employee(HotelID, CompanyName);
+
+-- 3. EXAMPLE QUERIES
+
+-- Query 1: List Available Rooms in a Specified City (e.g., Toronto)
+SELECT R.RoomNumber, R.Price, R.Capacity, H.City
+FROM Room R
+JOIN Hotel H 
+  ON R.HotelID = H.HotelID AND R.CompanyName = H.CompanyName
+WHERE H.City = 'Toronto';
+
+-- Query 2: Aggregation – Total Number of Rooms per Hotel Chain
+SELECT CompanyName, COUNT(*) AS TotalRooms
+FROM Hotel
+GROUP BY CompanyName;
+
+-- Query 3: Nested Query – Get Booking for the Room with the Highest Price
+SELECT *
+FROM Booking
+WHERE RoomNumber = (
+    SELECT RoomNumber 
+    FROM Room 
+    ORDER BY Price DESC 
+    LIMIT 1
+);
+
+-- Query 4: Aggregation – Total Capacity of All Rooms per Hotel
+-- Assumes 'Single'=1, 'Double'=2, 'Suite'=3; adjust values as needed.
+SELECT HotelID, CompanyName, 
+       SUM(CASE 
+             WHEN Capacity = 'Single' THEN 1
+             WHEN Capacity = 'Double' THEN 2
+             WHEN Capacity = 'Suite' THEN 3
+             ELSE 0 
+           END) AS TotalCapacity
+FROM Room
+GROUP BY HotelID, CompanyName;
