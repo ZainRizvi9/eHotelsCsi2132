@@ -20,6 +20,10 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const headquartersRoutes = require("./routes/headquartersRoutes");
 const hotelRoutes = require("./routes/hotelRoutes");
 const roomRoutes = require("./routes/roomRoutes");
+const authRoutes = require("./routes/authRoutes");
+const dashboardRoutes = require('./routes/dashboardRoutes');
+
+
 
 // Mount routes
 app.use("/api/booking", bookingRoutes);
@@ -29,6 +33,10 @@ app.use("/api/employee", employeeRoutes);
 app.use("/api/headquarters", headquartersRoutes);
 app.use("/api/hotel", hotelRoutes);
 app.use("/api/room", roomRoutes);
+app.use("/api/auth", authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
+
 
 // Start server
 app.listen(5001, () => {

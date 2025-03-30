@@ -52,6 +52,18 @@ router.get("/specific", async (req, res) => {
   }
 });
 
+// GET /api/hotel/list
+router.get("/list", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT HotelID, CompanyName FROM Hotel");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Failed to fetch hotels:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 // Update hotel category
 router.put("/category", async (req, res) => {
   const { hotelID, companyName, category } = req.body;

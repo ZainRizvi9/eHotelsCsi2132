@@ -1,31 +1,32 @@
 import React, { Fragment, useEffect, useState } from "react";
-import EditHotel from "./EditHotel";
+import { useNavigate } from 'react-router-dom';
 
-const ListHotels = () => {
+const ListHotels = ({ allowFilters }) => {
   const [hotels, setHotels] = useState([]);
+  const [filters, setFilters] = useState({ city: '', category: '', company: '' });
+  const navigate = useNavigate();
 
   const deleteHotel = async (hotelID, companyName) => {
     if (!window.confirm("Are you sure you want to delete this hotel?")) return;
-    
     try {
       await fetch("http://localhost:5001/api/hotel", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hotelID, companyName })
       });
-      setHotels(hotels.filter(hotel => hotel.hotelid !== hotelID || hotel.companyname !== companyName));
-    } catch (error) {
-      console.error("Failed to delete hotel:", error.message);
+      setHotels(hotels.filter(h => h.hotelid !== hotelID || h.companyname !== companyName));
+    } catch (err) {
+      console.error("Delete error:", err);
     }
   };
 
   const getHotels = async () => {
     try {
-      const response = await fetch("http://localhost:5001/api/hotel");
-      const jsonData = await response.json();
-      setHotels(jsonData);
-    } catch (error) {
-      console.error("Failed to fetch hotels:", error.message);
+      const res = await fetch("http://localhost:5001/api/hotel");
+      const json = await res.json();
+      setHotels(json);
+    } catch (err) {
+      console.error("Fetch error:", err);
     }
   };
 
@@ -33,41 +34,48 @@ const ListHotels = () => {
     getHotels();
   }, []);
 
+  const filtered = hotels.filter(h => {
+    return (
+      (!filters.city || h.city.toLowerCase().includes(filters.city.toLowerCase())) &&
+      (!filters.category || h.category.toLowerCase().includes(filters.category.toLowerCase())) &&
+      (!filters.company || h.companyname.toLowerCase().includes(filters.company.toLowerCase()))
+    );
+  });
+
   return (
     <Fragment>
-      <h1 className="mt-5 text-center">List of Hotels</h1>
-      <table className="table mt-5 text-center">
+      <h2 className="mt-4">Hotels</h2>
+
+      {allowFilters && (
+        <div className="filters mb-3">
+          <input placeholder="Filter by city" onChange={e => setFilters({ ...filters, city: e.target.value })} />
+          <input placeholder="Filter by category" onChange={e => setFilters({ ...filters, category: e.target.value })} />
+          <input placeholder="Filter by company" onChange={e => setFilters({ ...filters, company: e.target.value })} />
+        </div>
+      )}
+
+      <table className="table text-center">
         <thead>
           <tr>
             <th>Hotel ID</th>
-            <th>Company Name</th>
+            <th>Company</th>
             <th>Address</th>
             <th>Category</th>
-            <th>Number Of Rooms</th>
-            <th>Edit</th>
-            <th>Delete</th>
+            <th>Rooms</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {hotels.map(hotel => (
+          {filtered.map(hotel => (
             <tr key={`${hotel.hotelid}-${hotel.companyname}`}>
               <td>{hotel.hotelid}</td>
               <td>{hotel.companyname}</td>
-              <td>
-                {hotel.streetnumber} {hotel.streetname}, {hotel.city}, {hotel.state} {hotel.postalcode}
-              </td>
+              <td>{hotel.streetnumber} {hotel.streetname}, {hotel.city}, {hotel.state}</td>
               <td>{hotel.category}</td>
               <td>{hotel.numberofrooms}</td>
               <td>
-                <EditHotel hotel={hotel} />
-              </td>
-              <td>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => deleteHotel(hotel.hotelid, hotel.companyname)}
-                >
-                  Delete
-                </button>
+                <button onClick={() => navigate(`/hotel-rooms?hotelId=${hotel.hotelid}&company=${hotel.companyname}`)} className="btn btn-primary btn-sm">View Rooms</button>
+                <button onClick={() => deleteHotel(hotel.hotelid, hotel.companyname)} className="btn btn-danger btn-sm">Delete</button>
               </td>
             </tr>
           ))}
