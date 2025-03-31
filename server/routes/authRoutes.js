@@ -19,8 +19,15 @@ router.post('/login', async (req, res) => {
       const validPassword = await bcrypt.compare(password, employee.password);
       if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
-      const token = jwt.sign({ id: employee.employeeid, userType: 'employee' }, JWT_SECRET, { expiresIn: '1h' });
-      return res.json({ token, userType: 'employee' });
+      // Include hotel info in the response if needed
+      const payload = {
+        id: employee.employeeid,
+        userType: 'employee',
+        hotelId: employee.hotelid,
+        companyName: employee.companyname
+      };
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+      return res.json({ token, userType: 'employee', hotelId: employee.hotelid, companyName: employee.companyname });
 
     } else if (userType === 'customer') {
       const result = await pool.query("SELECT * FROM Customer WHERE Email = $1", [email]);
@@ -32,7 +39,6 @@ router.post('/login', async (req, res) => {
 
       const token = jwt.sign({ id: customer.customerid, userType: 'customer' }, JWT_SECRET, { expiresIn: '1h' });
       return res.json({ token, userType: 'customer' });
-
     } else {
       return res.status(400).json({ error: 'Invalid user type' });
     }
@@ -44,12 +50,16 @@ router.post('/login', async (req, res) => {
 
 // POST /api/auth/signup
 router.post('/signup', async (req, res) => {
+  // Log the full request body to inspect all values (for debugging purposes)
+  console.log("Signup request body:", req.body);
+
   const { userType, email, password, firstName, lastName, address, idType, idNumber, hotelId, companyName } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     if (userType === 'employee') {
+      // For employees, idNumber goes to SIN (which is VARCHAR(20) in your schema)
       await pool.query(
         `INSERT INTO Employee (FirstName, LastName, Address, SIN, Password, HotelID, CompanyName, Email) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,

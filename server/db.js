@@ -1,8 +1,7 @@
 /**
  * Define databse connection.
  *
- * @author Eric Van De Lande.
- * @since  March, 2023
+ * @author zain gunin
  */
 
 // Setup
