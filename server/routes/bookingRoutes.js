@@ -39,6 +39,47 @@ router.get("/bookings", async (req, res) => {
 });
 
 // ------------------------------------------------------
+// PUT /api/bookings/:bookingId - Edit booking (employee only)
+// ------------------------------------------------------
+router.put("/bookings/:bookingId", authenticate, async (req, res) => {
+  if (req.user.userType !== 'employee') return res.sendStatus(403);
+
+  const { bookingId } = req.params;
+  const { startDate, endDate, roomNumber, hotelId, companyName } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE Booking
+       SET StartDate = $1, EndDate = $2, RoomNumber = $3, HotelID = $4, CompanyName = $5
+       WHERE BookingID = $6
+       RETURNING *`,
+      [startDate, endDate, roomNumber, hotelId, companyName, bookingId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Edit booking error:", err.message);
+    res.status(500).json({ error: "Failed to edit booking" });
+  }
+});
+
+// ------------------------------------------------------
+// DELETE /api/bookings/:bookingId - Delete booking (employee only)
+// ------------------------------------------------------
+router.delete("/bookings/:bookingId", authenticate, async (req, res) => {
+  if (req.user.userType !== 'employee') return res.sendStatus(403);
+
+  const { bookingId } = req.params;
+
+  try {
+    await pool.query("DELETE FROM Booking WHERE BookingID = $1", [bookingId]);
+    res.json({ message: "Booking deleted successfully" });
+  } catch (err) {
+    console.error("Delete booking error:", err.message);
+    res.status(500).json({ error: "Failed to delete booking" });
+  }
+});
+
+// ------------------------------------------------------
 // PUT /api/bookings/convert/:bookingId - Convert to Renting
 // ------------------------------------------------------
 router.put("/bookings/convert/:bookingId", authenticate, async (req, res) => {

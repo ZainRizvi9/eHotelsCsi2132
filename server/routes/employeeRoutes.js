@@ -1,7 +1,7 @@
 /**
  * Handle API requests related to the Employee table.
  *
- * @author Zain
+ * @author Zain Gunin
  */
 
 // Setup

@@ -18,6 +18,9 @@ const EmployeeDashboard = () => {
     paymentAmount: '',
     paymentMethod: ''
   });
+  const [editingBookingId, setEditingBookingId] = useState(null);
+  const [editValues, setEditValues] = useState({ startDate: '', endDate: '' });
+
   const token = localStorage.getItem('token');
 
   const refreshCustomers = async () => {
@@ -96,6 +99,36 @@ const EmployeeDashboard = () => {
     }
   };
 
+  const deleteBooking = async (bookingId) => {
+    if (!window.confirm("Are you sure you want to delete this booking?")) return;
+    try {
+      await fetch(`http://localhost:5001/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchPendingBookings();
+    } catch (err) {
+      console.error("Failed to delete booking:", err);
+    }
+  };
+
+  const saveEdit = async (bookingId) => {
+    try {
+      await fetch(`http://localhost:5001/api/bookings/${bookingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(editValues)
+      });
+      setEditingBookingId(null);
+      fetchPendingBookings();
+    } catch (err) {
+      console.error("Failed to save edits:", err);
+    }
+  };
+
   const fetchRoomsAndCustomers = async () => {
     try {
       const [roomRes, custRes] = await Promise.all([
@@ -167,7 +200,7 @@ const EmployeeDashboard = () => {
                   <th>Start Date</th>
                   <th>End Date</th>
                   <th>Customer ID</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,11 +208,45 @@ const EmployeeDashboard = () => {
                   <tr key={booking.bookingid}>
                     <td>{booking.bookingid}</td>
                     <td>{booking.roomnumber}</td>
-                    <td>{booking.startdate}</td>
-                    <td>{booking.enddate}</td>
+                    <td>
+                      {editingBookingId === booking.bookingid ? (
+                        <input
+                          type="date"
+                          value={editValues.startDate}
+                          onChange={e => setEditValues({ ...editValues, startDate: e.target.value })}
+                        />
+                      ) : (
+                        booking.startdate
+                      )}
+                    </td>
+                    <td>
+                      {editingBookingId === booking.bookingid ? (
+                        <input
+                          type="date"
+                          value={editValues.endDate}
+                          onChange={e => setEditValues({ ...editValues, endDate: e.target.value })}
+                        />
+                      ) : (
+                        booking.enddate
+                      )}
+                    </td>
                     <td>{booking.customerid}</td>
                     <td>
-                      <button className="btn btn-success" onClick={() => convertBooking(booking.bookingid)}>Convert</button>
+                      {editingBookingId === booking.bookingid ? (
+                        <>
+                          <button className="btn btn-primary btn-sm me-1" onClick={() => saveEdit(booking.bookingid)}>Save</button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => setEditingBookingId(null)}>Cancel</button>
+                        </>
+                      ) : (
+                        <>
+                          <button className="btn btn-success btn-sm me-1" onClick={() => convertBooking(booking.bookingid)}>Convert</button>
+                          <button className="btn btn-warning btn-sm me-1" onClick={() => {
+                            setEditingBookingId(booking.bookingid);
+                            setEditValues({ startDate: booking.startdate, endDate: booking.enddate });
+                          }}>Edit</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteBooking(booking.bookingid)}>Delete</button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
